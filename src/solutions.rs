@@ -32,4 +32,4 @@ macro_rules! solutions {
     };
 }
 
-solutions!(day1);
+solutions!(day1, day2, day3, day6);
