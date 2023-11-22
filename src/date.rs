@@ -2,6 +2,6 @@
 ///
 /// Month is irrelevant in this context because the AoC challenge occurs yearly in December.
 pub struct ChallengeDate {
-    pub day: u8,
     pub year: u16,
+    pub day: u8,
 }
