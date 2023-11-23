@@ -1,42 +1,100 @@
-use std::io::{BufReader, Read};
+use std::fs::{self, File};
+use std::io::{self, BufReader, Read, Write};
+use std::path::PathBuf;
 
 use reqwest::blocking::{Client, Response};
 use url::Url;
 
 use crate::date::ChallengeDate;
 
+/// Tagged wrapper for the input data `BufReader`.
+enum InputSource {
+    Website(BufReader<Response>),
+    Cache(BufReader<File>),
+}
+
+impl InputSource {
+    /// Get a mutable reference to the inner `BufReader`.
+    fn inner_mut(&mut self) -> Box<&mut dyn Read> {
+        match self {
+            Self::Website(ref mut reader) => Box::new(reader),
+            Self::Cache(ref mut reader) => Box::new(reader),
+        }
+    }
+
+    /// Returns whether the variant is `Self::Website(_)`.
+    fn is_website(&self) -> bool {
+        matches!(self, InputSource::Website(_))
+    }
+}
+
 /// Input data for a challenge.
-pub struct Input(BufReader<Response>);
+pub struct Input {
+    date: ChallengeDate,
+    source: InputSource,
+}
 
 impl Input {
     /// Fetch the input for the given day's challenge from AoC's website.
     pub fn fetch(date: ChallengeDate) -> Self {
-        let url = build_url(date);
-        let session = fetch_session_token();
-        let response = Client::new()
-            .get(url)
-            .header("Cookie", format!("session={session}"))
-            .send()
-            .expect("failed to get AoC input data");
+        let source = if let Some(file_reader) = read_cached(&date) {
+            InputSource::Cache(file_reader)
+        } else {
+            let url = build_url(&date);
+            let session = fetch_session_token();
+            let response = Client::new()
+                .get(url)
+                .header("Cookie", format!("session={session}"))
+                .send()
+                .expect("failed to get AoC input data");
 
-        Self(BufReader::new(response))
-    }
+            InputSource::Website(BufReader::new(response))
+        };
 
-    /// Get a reference to the inner `BufReader`.
-    pub fn reader(&mut self) -> &mut BufReader<Response> {
-        &mut self.0
+        Self { date, source }
     }
 
     /// Reads the entirety of the buffer to a string.
     pub fn read_all(mut self) -> String {
         let mut buf = String::new();
-        _ = self.reader().read_to_string(&mut buf).unwrap();
+        _ = self.source.inner_mut().read_to_string(&mut buf).unwrap();
+        if self.source.is_website() {
+            if let Err(error) = cache_all(&self.date, &buf) {
+                eprintln!("failed to cache input data: {:?}", error);
+            }
+        }
         buf
     }
 }
 
+/// Returns the path to the file that caches input for the given challenge date.
+fn cache_path(date: &ChallengeDate) -> PathBuf {
+    let file_name = format!("{}-{}.txt", date.year, date.day);
+    PathBuf::new().join(".cache").join(file_name)
+}
+
+/// Write data to cache file for the given challenge date.
+fn cache_all(date: &ChallengeDate, data: &str) -> io::Result<()> {
+    let file_path = cache_path(&date);
+    let directory = file_path.parent().unwrap();
+    fs::create_dir_all(directory)?;
+    let mut file = File::create(file_path)?;
+    file.write_all(data.as_bytes())?;
+    Ok(())
+}
+
+/// Read data from cache file for the given challenge date.
+fn read_cached(date: &ChallengeDate) -> Option<BufReader<File>> {
+    let file_path = cache_path(&date);
+    if !file_path.exists() {
+        return None;
+    }
+    let file = File::open(file_path).unwrap();
+    Some(BufReader::new(file))
+}
+
 /// Builds the URL to get the input for the given day's challenge from AoC's website.
-fn build_url(date: ChallengeDate) -> Url {
+fn build_url(date: &ChallengeDate) -> Url {
     const BASE_URL: &str = "https://adventofcode.com";
 
     let mut url = Url::parse(BASE_URL).expect("bad BASE_URL, this is a programmer error");
