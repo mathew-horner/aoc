@@ -17,8 +17,8 @@ impl InputSource {
     /// Get a mutable reference to the inner `BufReader`.
     fn inner_mut(&mut self) -> Box<&mut dyn Read> {
         match self {
-            Self::Website(ref mut reader) => Box::new(reader),
-            Self::Cache(ref mut reader) => Box::new(reader),
+            Self::Website(reader) => Box::new(reader),
+            Self::Cache(reader) => Box::new(reader),
         }
     }
 
