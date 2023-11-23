@@ -48,6 +48,11 @@ impl Input {
                 .send()
                 .expect("failed to get AoC input data");
 
+            let status = response.status();
+            if !status.is_success() {
+                panic!("non-200 status returned when fetching input data: {status}");
+            }
+
             InputSource::Website(BufReader::new(response))
         };
 
