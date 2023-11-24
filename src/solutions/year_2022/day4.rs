@@ -20,13 +20,11 @@ pub fn solve(input: crate::Input) {
     println!("Answer #2: {answer2}");
 }
 
-/// Parses a lint from the input (example: `2-3,4-5`).
 fn parse_line(line: &str) -> (RangeInclusive<u32>, RangeInclusive<u32>) {
     let (left, right) = line.split_once(",").unwrap();
     (parse_range(left), parse_range(right))
 }
 
-/// Parses a single range string from the input (example: `2-3`).
 fn parse_range(text: &str) -> RangeInclusive<u32> {
     let (left, right) = text.split_once("-").unwrap();
     let left: u32 = left.parse().unwrap();
