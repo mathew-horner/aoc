@@ -19,9 +19,6 @@ lazy_static! {
         "eight".into() => 8,
         "nine".into() => 9,
     };
-
-    /// Regex that can find any of the spelled out digits defined in `SPELLED_DIGIT_MAP`.
-    static ref SPELLED_DIGIT_REGEX: Regex = Regex::new(&format!("({})", SPELLED_DIGIT_MAP.keys().join("|"))).unwrap();
 }
 
 pub fn solve(input: crate::Input) {
