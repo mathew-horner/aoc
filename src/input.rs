@@ -1,11 +1,15 @@
 use std::fs::{self, File};
-use std::io::{self, BufReader, Read, Write};
+use std::io::{self, BufRead, BufReader, Lines, Read, Write};
 use std::path::PathBuf;
 
 use reqwest::blocking::{Client, Response};
 use url::Url;
 
 use crate::date::ChallengeDate;
+
+pub trait Reader: Read + BufRead {}
+
+impl<T> Reader for T where T: Read + BufRead {}
 
 /// Tagged wrapper for the input data `BufReader`.
 enum InputSource {
@@ -15,7 +19,15 @@ enum InputSource {
 
 impl InputSource {
     /// Get a mutable reference to the inner `BufReader`.
-    fn inner_mut(&mut self) -> Box<&mut dyn Read> {
+    fn inner_mut(&mut self) -> Box<&mut dyn Reader> {
+        match self {
+            Self::Website(reader) => Box::new(reader),
+            Self::Cache(reader) => Box::new(reader),
+        }
+    }
+
+    /// Take ownership over the inner `BufReader`.
+    fn into_inner(self) -> Box<dyn Reader> {
         match self {
             Self::Website(reader) => Box::new(reader),
             Self::Cache(reader) => Box::new(reader),
@@ -69,6 +81,11 @@ impl Input {
             }
         }
         buf
+    }
+
+    /// Reads the input line-by-line.
+    pub fn read_lines(self) -> impl Iterator<Item = String> {
+        self.source.into_inner().lines().map(Result::unwrap)
     }
 }
 
