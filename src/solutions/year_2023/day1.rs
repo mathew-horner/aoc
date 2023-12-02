@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 
-use itertools::Itertools;
 use lazy_static::lazy_static;
 use maplit::hashmap;
-use pcre2::bytes::Regex;
 
 lazy_static! {
     /// Maps all spelled out digits to their numeric representation.
