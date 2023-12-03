@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::io::{self, BufRead, BufReader, Lines, Read, Write};
+use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::PathBuf;
 
 use reqwest::blocking::{Client, Response};
