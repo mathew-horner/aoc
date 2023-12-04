@@ -10,18 +10,17 @@ impl Card {
     fn parse(line: &str) -> Self {
         // Strip off the leading "Card X:" text, we don't need it.
         let both_token = line.split(':').last().unwrap().trim();
-
         let tokens: Vec<_> = both_token.split('|').collect();
         let winning = HashSet::from_iter(parse_numbers(tokens[0]));
         let you_have = parse_numbers(tokens[1]);
         Self { winning, you_have }
     }
 
-    fn count_matching(&self) -> u32 {
+    fn count_matching(&self) -> usize {
         self.you_have
             .iter()
             .filter(|card| self.winning.contains(card))
-            .count() as u32
+            .count()
     }
 
     fn score(&self) -> u32 {
@@ -29,7 +28,7 @@ impl Card {
         if count == 0 {
             return 0;
         }
-        2_u32.pow(count - 1)
+        2_u32.pow(count as u32 - 1)
     }
 }
 
@@ -42,8 +41,8 @@ fn parse_numbers(text: &str) -> Vec<u32> {
 fn count_with_2_rules(
     cards: &[Card],
     won: Range<usize>,
-    cache: &mut HashMap<Range<usize>, u64>,
-) -> u64 {
+    cache: &mut HashMap<Range<usize>, u32>,
+) -> u32 {
     if let Some(sum) = cache.get(&won) {
         return *sum;
     }
@@ -51,20 +50,19 @@ fn count_with_2_rules(
     let mut sum = 0;
     for idx in won.clone() {
         let score = cards[idx].count_matching();
-        let left = idx + 1;
-        let right = (left + score as usize).min(cards.len());
-        sum = sum + count_with_2_rules(cards, left..right, cache) + 1;
+        let lo = idx + 1;
+        let hi = (lo + score as usize).min(cards.len());
+        sum += count_with_2_rules(cards, lo..hi, cache) + 1;
     }
 
     cache.insert(won, sum);
     sum
 }
 
-fn run<'a>(lines: impl Iterator<Item = &'a str>) -> (u32, u64) {
-    let cards: Vec<_> = lines.map(|line| Card::parse(&line)).collect();
+fn run<'a>(lines: impl Iterator<Item = &'a str>) -> (u32, u32) {
+    let cards: Vec<_> = lines.map(Card::parse).collect();
     let answer1: u32 = cards.iter().map(Card::score).sum();
-    let mut cache = HashMap::new();
-    let answer2: u64 = count_with_2_rules(&cards, 0..cards.len(), &mut cache);
+    let answer2: u32 = count_with_2_rules(&cards, 0..cards.len(), &mut HashMap::new());
     (answer1, answer2)
 }
 
