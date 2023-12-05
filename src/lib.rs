@@ -1,3 +1,5 @@
+#![feature(pattern)]
+
 pub mod date;
 pub mod input;
 pub mod solutions;
