@@ -7,11 +7,9 @@ struct Race {
 
 impl Race {
     fn parse_as_multiple<'a>(input: String) -> Vec<Self> {
-        let mut lines = input.lines();
-        let times_line = lines.next().unwrap();
-        let times = parse_line_as_multiple(&times_line);
-        let distances_line = lines.next().unwrap();
-        let distances = parse_line_as_multiple(&distances_line);
+        let mut parsed = input.lines().map(parse_line_as_multiple);
+        let times = parsed.next().unwrap();
+        let distances = parsed.next().unwrap();
         times
             .zip(distances)
             .map(|(time, dist_record)| Self { time, dist_record })
@@ -19,11 +17,9 @@ impl Race {
     }
 
     fn parse_as_one(input: String) -> Self {
-        let mut lines = input.lines();
-        let time_line = lines.next().unwrap();
-        let time = parse_line_as_one(&time_line);
-        let distance_line = lines.next().unwrap();
-        let distance = parse_line_as_one(&distance_line);
+        let mut parsed = input.lines().map(parse_line_as_one);
+        let time = parsed.next().unwrap();
+        let distance = parsed.next().unwrap();
         Self {
             time,
             dist_record: distance,
@@ -31,14 +27,13 @@ impl Race {
     }
 
     fn ways_to_beat_record(&self) -> u64 {
-        let mut count = 0;
-        for i in 1..self.time {
-            let dist = (self.time - i) * i;
-            if dist > self.dist_record {
-                count += 1;
+        (1..self.time).fold(0, |acc, epoch| {
+            if (self.time - epoch) * epoch > self.dist_record {
+                acc + 1
+            } else {
+                acc
             }
-        }
-        count
+        })
     }
 }
 
