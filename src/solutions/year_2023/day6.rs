@@ -27,12 +27,11 @@ impl Race {
     }
 
     fn ways_to_beat_record(&self) -> u64 {
-        (1..self.time).fold(0, |acc, epoch| {
+        (1..self.time).fold(0, |mut acc, epoch| {
             if (self.time - epoch) * epoch > self.dist_record {
-                acc + 1
-            } else {
-                acc
+                acc += 1
             }
+            acc
         })
     }
 }
