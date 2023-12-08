@@ -10,6 +10,7 @@ anyhow = "1.0.75"
 itertools = "0.12.0"
 lazy_static = "1.4.0"
 maplit = "1.0.2"
+num = "0.4.1"
 regex = { version = "1.10.2", features = ["pattern"] }
 reqwest = { version = "0.11.22", features = ["blocking"] }
 rstest = "0.18.2"
