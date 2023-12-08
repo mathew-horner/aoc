@@ -19,11 +19,12 @@ impl<'a> Map<'a> {
         // One blank line to throw away.
         _ = lines.next().unwrap();
 
-        let mut map = HashMap::new();
-        for line in lines {
-            let (_, [key, left, right]) = LINE_REGEX.captures(line).unwrap().extract();
-            map.insert(key, (left, right));
-        }
+        let map = lines
+            .map(|line| {
+                let (_, [key, left, right]) = LINE_REGEX.captures(line).unwrap().extract();
+                (key, (left, right))
+            })
+            .collect();
 
         Self { instructions, map }
     }
@@ -32,11 +33,9 @@ impl<'a> Map<'a> {
         let mut counter = 0;
         let mut curr = from;
 
-        loop {
-            if to(curr) {
-                break;
-            }
-            let instruction = self.instructions[counter % self.instructions.len()];
+        while !to(curr) {
+            let idx = counter % self.instructions.len();
+            let instruction = self.instructions[idx];
             let entry = self.map.get(curr).unwrap();
             curr = match instruction {
                 'L' => entry.0,
@@ -66,11 +65,8 @@ fn solve_part2(input: &str) -> u64 {
 }
 
 fn lcm(mut iter: impl Iterator<Item = u64>) -> u64 {
-    let mut lcm = iter.next().unwrap();
-    for num in iter {
-        lcm = num::integer::lcm(lcm, num);
-    }
-    lcm
+    let init = iter.next().unwrap();
+    iter.fold(init, |acc, num| num::integer::lcm(acc, num))
 }
 
 pub fn solve(input: crate::Input) {
