@@ -8,7 +8,7 @@ macro_rules! days {
     ($year:literal, $($day:ident), *) => {
         $( mod $day; )*
 
-        pub fn run(day: &str) {
+        pub fn run(day: &str, part: u8) {
             match day {
                 $(
                     day @ stringify!($day) => {
@@ -20,7 +20,11 @@ macro_rules! days {
 
                         // TODO: Allow user to input which year to run.
                         let input = crate::input::Input::fetch(crate::date::ChallengeDate { year: $year, day: day_number });
-                        $day::solve(input);
+                        match part {
+                            1 => println!("Part #1: {}", $day::part1(input)),
+                            2 => println!("Part #2: {}", $day::part2(input)),
+                            _ => panic!("Invalid part number"),
+                        };
                     },
                 )*
                 other => panic!("{} has not been implemented", other),
@@ -39,10 +43,10 @@ macro_rules! years {
     ($($year:ident), *) => {
         $( mod $year; )*
 
-        pub fn run(year: &str, day: &str) {
+        pub fn run(year: &str, day: &str, part: u8) {
             match year {
                 $(
-                    stringify!($year) => $year::run(day),
+                    stringify!($year) => $year::run(day, part),
                 )*
                 other => panic!("{} has not been implemented", other),
             }
