@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashSet;
 
 type Page = u32;
 type Pair = (Page, Page);
@@ -64,140 +64,22 @@ fn middle_page(update: &Update) -> Page {
 
 pub fn part2(input: crate::Input) -> u32 {
     let (pairs, updates) = parse(input);
+    let pairs: HashSet<_> = HashSet::from_iter(&pairs);
     let mut sum = 0;
 
     for update in updates {
-        let sorted = sort_update(&update, &pairs);
+        let mut sorted = update.clone();
+        sorted.sort_by(|&a, &b| {
+            if pairs.contains(&(a, b)) {
+                std::cmp::Ordering::Less
+            } else {
+                std::cmp::Ordering::Greater
+            }
+        });
         if sorted != update {
             sum += middle_page(&sorted);
         }
     }
 
     sum
-}
-
-fn sort_update(update: &Update, pairs: &Vec<Pair>) -> Update {
-    let mut graph = Graph::build(&update, &pairs);
-    let mut sorted = Vec::with_capacity(update.len());
-    let mut buffer: VecDeque<Page> = VecDeque::from_iter(
-        update
-            .iter()
-            .filter(|page| !graph.has_incoming(**page))
-            .cloned(),
-    );
-
-    while let Some(page) = buffer.pop_back() {
-        sorted.push(page);
-        for other_page in graph.outgoing(page) {
-            graph.remove_edge(page, other_page);
-            if !graph.has_incoming(other_page) {
-                buffer.push_front(other_page);
-            }
-        }
-    }
-
-    sorted
-}
-
-struct Graph<'a> {
-    update: &'a Update,
-    index_map: HashMap<Page, usize>,
-    matrix: Vec<Vec<bool>>,
-}
-
-impl<'a> Graph<'a> {
-    fn build(update: &'a Update, pairs: &Vec<Pair>) -> Self {
-        let index_map: HashMap<Page, usize> = update
-            .into_iter()
-            .cloned()
-            .enumerate()
-            .map(|(idx, page)| (page, idx))
-            .collect();
-
-        let mut matrix = vec![vec![false; update.len()]; update.len()];
-        for (page1, page2) in pairs {
-            if let (Some(idx1), Some(idx2)) = (index_map.get(page1), index_map.get(page2)) {
-                matrix[*idx1][*idx2] = true;
-            }
-        }
-
-        Self {
-            update,
-            index_map,
-            matrix,
-        }
-    }
-
-    fn outgoing(&self, page: Page) -> Vec<Page> {
-        let mut output = Vec::new();
-        let row = *self.index_map.get(&page).unwrap();
-        for col in 0..self.vertex_count() {
-            if self.matrix[row][col] {
-                output.push(self.update[col]);
-            }
-        }
-        output
-    }
-
-    fn remove_edge(&mut self, page1: Page, page2: Page) {
-        let idx1 = *self.index_map.get(&page1).unwrap();
-        let idx2 = *self.index_map.get(&page2).unwrap();
-        self.matrix[idx1][idx2] = false;
-    }
-
-    fn has_incoming(&self, page: Page) -> bool {
-        let col = *self.index_map.get(&page).unwrap();
-        for row in 0..self.vertex_count() {
-            if self.matrix[row][col] {
-                return true;
-            }
-        }
-        false
-    }
-
-    fn vertex_count(&self) -> usize {
-        self.update.len()
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_update_sort() {
-        let pairs = vec![
-            (47, 53),
-            (97, 13),
-            (97, 61),
-            (97, 47),
-            (75, 29),
-            (61, 13),
-            (75, 53),
-            (29, 13),
-            (97, 29),
-            (53, 29),
-            (61, 53),
-            (97, 53),
-            (61, 29),
-            (47, 13),
-            (75, 47),
-            (97, 75),
-            (47, 61),
-            (75, 61),
-            (47, 29),
-            (75, 13),
-            (53, 13),
-        ];
-
-        assert_eq!(
-            sort_update(&vec![75, 97, 47, 61, 53], &pairs),
-            vec![97, 75, 47, 61, 53]
-        );
-        assert_eq!(
-            sort_update(&vec![97, 13, 75, 29, 47], &pairs),
-            vec![97, 75, 47, 29, 13]
-        );
-        assert_eq!(sort_update(&vec![61, 13, 29], &pairs), vec![61, 29, 13]);
-    }
 }
