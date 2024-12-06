@@ -1,4 +1,12 @@
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    },
+};
+
+use rayon::prelude::*;
 
 type Position = (i32, i32);
 
@@ -77,14 +85,20 @@ fn update_pos(pos: Position, direction: &mut usize, obstacles: &HashSet<Position
 }
 
 pub fn part2(input: crate::Input) -> usize {
-    let mut input = Input::parse(input);
-    let mut sum = 0;
-    for row in 0..input.map_height {
-        for col in 0..input.map_width {
+    let input = Input::parse(input);
+    let sum = Arc::new(AtomicUsize::new(0));
+    let positions: Vec<_> = (0..input.map_height)
+        .flat_map(|row| (0..input.map_width).map(move |col| (row, col)))
+        .collect();
+
+    positions.par_iter().for_each({
+        let sum = sum.clone();
+        move |&(row, col)| {
+            let mut obstacles = input.obstacles.clone();
             if (row as i32, col as i32) == input.guard
-                || !input.obstacles.insert((row as i32, col as i32))
+                || !obstacles.insert((row as i32, col as i32))
             {
-                continue;
+                return;
             }
 
             let mut guard = input.guard;
@@ -97,16 +111,14 @@ pub fn part2(input: crate::Input) -> usize {
                 && guard.1 < input.map_width as i32
             {
                 if !seen.insert((guard, direction)) {
-                    sum += 1;
+                    sum.fetch_add(1, Ordering::SeqCst);
                     break;
                 }
-                guard = update_pos(guard, &mut direction, &input.obstacles);
+                guard = update_pos(guard, &mut direction, &obstacles);
             }
-
-            input.obstacles.remove(&(row as i32, col as i32));
         }
-    }
-    sum
+    });
+    sum.load(Ordering::SeqCst)
 }
 
 #[cfg(test)]
