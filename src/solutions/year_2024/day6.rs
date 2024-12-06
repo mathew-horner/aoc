@@ -47,7 +47,10 @@ impl Input {
 }
 
 pub fn part1(input: crate::Input) -> usize {
-    let input = Input::parse(input);
+    walk(&Input::parse(input)).len()
+}
+
+fn walk(input: &Input) -> HashSet<Position> {
     let mut walked = HashSet::new();
     let mut guard = input.guard;
 
@@ -63,7 +66,7 @@ pub fn part1(input: crate::Input) -> usize {
         guard = update_pos(guard, &mut direction, &input.obstacles);
     }
 
-    walked.len()
+    walked
 }
 
 fn update_pos(pos: Position, direction: &mut usize, obstacles: &HashSet<Position>) -> Position {
@@ -86,6 +89,7 @@ fn update_pos(pos: Position, direction: &mut usize, obstacles: &HashSet<Position
 
 pub fn part2(input: crate::Input) -> usize {
     let input = Input::parse(input);
+    let path = walk(&input);
     let sum = Arc::new(AtomicUsize::new(0));
     let positions: Vec<_> = (0..input.map_height)
         .flat_map(|row| (0..input.map_width).map(move |col| (row, col)))
@@ -94,9 +98,12 @@ pub fn part2(input: crate::Input) -> usize {
     positions.par_iter().for_each({
         let sum = sum.clone();
         move |&(row, col)| {
+            let row = row as i32;
+            let col = col as i32;
             let mut obstacles = input.obstacles.clone();
-            if (row as i32, col as i32) == input.guard
-                || !obstacles.insert((row as i32, col as i32))
+            if (row, col) == input.guard
+                || !path.contains(&(row, col))
+                || !obstacles.insert((row, col))
             {
                 return;
             }
