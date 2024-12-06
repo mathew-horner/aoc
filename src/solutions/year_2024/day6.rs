@@ -87,20 +87,13 @@ pub fn part2(input: crate::Input) -> usize {
     let input = Input::parse(input);
     let path = walk(&input);
     let sum = Arc::new(AtomicUsize::new(0));
-    let positions: Vec<_> = (0..input.map_height)
-        .flat_map(|row| (0..input.map_width).map(move |col| (row, col)))
-        .collect();
-
-    positions.par_iter().for_each({
+    path.par_iter().for_each({
         let sum = sum.clone();
         move |&(row, col)| {
             let row = row as i32;
             let col = col as i32;
             let mut obstacles = input.obstacles.clone();
-            if (row, col) == input.guard
-                || !path.contains(&(row, col))
-                || !obstacles.insert((row, col))
-            {
+            if (row, col) == input.guard || !obstacles.insert((row, col)) {
                 return;
             }
 
