@@ -1,5 +1,5 @@
 use std::fs::{self, File};
-use std::io::{self, BufRead, BufReader, Read, Write};
+use std::io::{self, BufRead, BufReader, Cursor, Read, Write};
 use std::path::PathBuf;
 
 use reqwest::blocking::{Client, Response};
@@ -15,6 +15,7 @@ impl<T> Reader for T where T: Read + BufRead {}
 enum InputSource {
     Website(BufReader<Response>),
     Cache(BufReader<File>),
+    Memory(BufReader<Cursor<String>>),
 }
 
 impl InputSource {
@@ -23,6 +24,7 @@ impl InputSource {
         match self {
             Self::Website(reader) => Box::new(reader),
             Self::Cache(reader) => Box::new(reader),
+            Self::Memory(reader) => Box::new(reader),
         }
     }
 
@@ -31,6 +33,7 @@ impl InputSource {
         match self {
             Self::Website(reader) => Box::new(reader),
             Self::Cache(reader) => Box::new(reader),
+            Self::Memory(reader) => Box::new(reader),
         }
     }
 
@@ -42,7 +45,7 @@ impl InputSource {
 
 /// Input data for a challenge.
 pub struct Input {
-    date: ChallengeDate,
+    date: Option<ChallengeDate>,
     source: InputSource,
 }
 
@@ -68,7 +71,18 @@ impl Input {
             InputSource::Website(BufReader::new(response))
         };
 
-        Self { date, source }
+        Self {
+            date: Some(date),
+            source,
+        }
+    }
+
+    /// Seed with the given input data.
+    pub fn memory(data: impl Into<String>) -> Self {
+        Self {
+            date: None,
+            source: InputSource::Memory(BufReader::new(Cursor::new(data.into()))),
+        }
     }
 
     /// Reads the entirety of the buffer to a string.
@@ -76,8 +90,10 @@ impl Input {
         let mut buf = String::new();
         _ = self.source.inner_mut().read_to_string(&mut buf).unwrap();
         if self.source.is_website() {
-            if let Err(error) = cache_all(&self.date, &buf) {
-                eprintln!("failed to cache input data: {:?}", error);
+            if let Some(date) = &self.date {
+                if let Err(error) = cache_all(date, &buf) {
+                    eprintln!("failed to cache input data: {:?}", error);
+                }
             }
         }
         buf
