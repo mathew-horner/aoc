@@ -71,18 +71,12 @@ impl Input {
             InputSource::Website(BufReader::new(response))
         };
 
-        Self {
-            date: Some(date),
-            source,
-        }
+        Self { date: Some(date), source }
     }
 
     /// Seed with the given input data.
     pub fn memory(data: impl Into<String>) -> Self {
-        Self {
-            date: None,
-            source: InputSource::Memory(BufReader::new(Cursor::new(data.into()))),
-        }
+        Self { date: None, source: InputSource::Memory(BufReader::new(Cursor::new(data.into()))) }
     }
 
     /// Reads the entirety of the buffer to a string.
@@ -131,17 +125,13 @@ fn read_cached(date: &ChallengeDate) -> Option<BufReader<File>> {
     Some(BufReader::new(file))
 }
 
-/// Builds the URL to get the input for the given day's challenge from AoC's website.
+/// Builds the URL to get the input for the given day's challenge from AoC's
+/// website.
 fn build_url(date: &ChallengeDate) -> Url {
     const BASE_URL: &str = "https://adventofcode.com";
 
     let mut url = Url::parse(BASE_URL).expect("bad BASE_URL, this is a programmer error");
-    url.path_segments_mut().unwrap().extend([
-        &date.year.to_string(),
-        "day",
-        &date.day.to_string(),
-        "input",
-    ]);
+    url.path_segments_mut().unwrap().extend([&date.year.to_string(), "day", &date.day.to_string(), "input"]);
 
     url
 }

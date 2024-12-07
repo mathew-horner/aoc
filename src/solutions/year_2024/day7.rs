@@ -3,55 +3,36 @@ fn parse(input: crate::Input) -> Vec<(u64, Vec<u64>)> {
         .read_lines()
         .map(|line| {
             let (y, terms) = line.split_once(':').unwrap();
-            let y = y.parse().unwrap();
-            let terms = terms.trim();
-            let terms: Vec<_> = terms.split(' ').map(|term| term.parse().unwrap()).collect();
-            (y, terms)
+            let terms: Vec<_> = terms.trim().split(' ').map(|term| term.parse().unwrap()).collect();
+            (y.parse().unwrap(), terms)
         })
         .collect()
 }
 
 pub fn part1(input: crate::Input) -> u64 {
-    let equations = parse(input);
-    let mut total = 0;
-    for (y, terms) in equations {
-        let mut terms = terms.into_iter();
-        let mut values = vec![terms.next().unwrap()];
-        for term in terms {
-            let mut next = Vec::with_capacity(values.len() * 2);
-            for value in values {
-                next.push(value * term);
-                next.push(value + term);
-            }
-            values = next;
-        }
-
-        if values.contains(&y) {
-            total += y
-        }
-    }
-    total
+    solve(input, false)
 }
 
 pub fn part2(input: crate::Input) -> u64 {
-    let equations = parse(input);
-    let mut total = 0;
-    for (y, terms) in equations {
-        let mut terms = terms.into_iter();
-        let mut values = vec![terms.next().unwrap()];
-        for term in terms {
-            let mut next = Vec::with_capacity(values.len() * 2);
-            for value in values {
-                next.push(format!("{value}{term}").parse().unwrap());
-                next.push(value * term);
-                next.push(value + term);
-            }
-            values = next;
-        }
+    solve(input, true)
+}
 
-        if values.contains(&y) {
-            total += y
-        }
-    }
-    total
+fn solve(input: crate::Input, use_concatenation: bool) -> u64 {
+    let all_results = parse(input).into_iter().map(|(y, terms)| {
+        let seed = terms[0];
+        #[rustfmt::skip]
+        let results = terms.into_iter().skip(1).fold(vec![seed], |prev, term| {
+            prev.into_iter()
+                .flat_map(|value| [
+                    use_concatenation.then(|| format!("{value}{term}").parse().unwrap()),
+                    Some(value * term),
+                    Some(value + term),
+                ])
+                .flatten()
+                .collect()
+        });
+        (y, results)
+    });
+
+    all_results.filter_map(|(y, results)| results.contains(&y).then_some(y)).sum()
 }

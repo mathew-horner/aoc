@@ -1,4 +1,5 @@
-/// Generate module definitions for each day's solution and define `run` to dispatch to the right one.
+/// Generate module definitions for each day's solution and define `run` to
+/// dispatch to the right one.
 ///
 /// Usage:
 /// ```rust
@@ -33,7 +34,8 @@ macro_rules! days {
     };
 }
 
-/// Generate module definitions for each year and define `run` to dispatch to the right one.
+/// Generate module definitions for each year and define `run` to dispatch to
+/// the right one.
 ///
 /// Usage:
 /// ```rust
@@ -54,5 +56,4 @@ macro_rules! years {
     }
 }
 
-pub(crate) use days;
-pub(crate) use years;
+pub(crate) use {days, years};
