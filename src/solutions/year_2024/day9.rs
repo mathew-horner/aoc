@@ -95,6 +95,7 @@ pub fn part2(input: crate::Input) -> u64 {
             let mut block = block.borrow_mut();
             if sink.free_space() >= block.data.len() {
                 block.move_to(&mut sink);
+                break;
             }
         }
     }
