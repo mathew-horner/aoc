@@ -2,6 +2,7 @@
 name = "aoc"
 version = "0.1.0"
 edition = "2021"
+default-run = "main"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,9 +12,12 @@ itertools = "0.12.0"
 lazy_static = "1.4.0"
 maplit = "1.0.2"
 num = "0.4.1"
+proc-macro2 = "1.0.92"
+quote = "1.0.37"
 rayon = "1.10.0"
 regex = { version = "1.10.2", features = ["pattern"] }
 reqwest = { version = "0.11.22", features = ["blocking"] }
 rstest = "0.18.2"
 strum = { version = "0.25.0", features = ["derive"] }
+syn = { version = "2.0.90", features = ["full"] }
 url = "2.4.1"

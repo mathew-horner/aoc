@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 type SafePos = (u32, u32);
 type UnsafePos = (i32, i32);
